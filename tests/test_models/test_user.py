@@ -1,17 +1,23 @@
 #!/usr/bin/python3
-""" testing User """
-import unittest
+"""Test User"""
+from models.amenity import Amenity
+from models.base_model import BaseModel
+from models.city import City
+from models.place import Place
+from models.review import Review
+from models.state import State
 import pep8
-from models.user import User
+import unittest
 
-class User_testing(unittest.TestCase):
-    """ check BaseModel """
 
-    def testpep8(self):
-        """ testing codestyle """
-        pepstylecode = pep8.StyleGuide(quiet=True)
-        path_user = 'models/user.py'
-        result = pepstylecode.check_files([path_user])
+class Testuser(unittest.TestCase):
+    """
+    Unittests for the User class.
+    """
+
+    def test_pep8_conformance_user(self):
+        """Test that we conform to PEP8."""
+        pep8style = pep8.StyleGuide(quiet=True)
+        result = pep8style.check_files(['models/user.py'])
         self.assertEqual(result.total_errors, 0,
                          "Found code style errors (and warnings).")
-

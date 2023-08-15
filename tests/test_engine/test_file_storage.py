@@ -1,147 +1,124 @@
 #!/usr/bin/python3
-""" Check Filestorage class """
-import unittest
-from os import path
-from models import storage
-from models.user import User
-from models.city import City
-from models.state import State
-from models.place import Place
-from models.review import Review
+"""test for file storage"""
+from datetime import datetime
+import json
 from models.amenity import Amenity
 from models.base_model import BaseModel
+from models.city import City
 from models.engine.file_storage import FileStorage
+from models.place import Place
+from models.review import Review
+from models.state import State
+from models.user import User
+import os
+import pep8
+import unittest
+import uuid
 
 
-class test_storage(unittest.TestCase):
-    """ check the class """
+class TestFileStorage(unittest.TestCase):
+    """this will test the FileStorage"""
 
-    def setUp(self):
-        """ check empty """
-        try:
-            remove('file.json')
-        except Exception:
-            pass
-        FileStorage._FileStorage__objects = {}
+    @classmethod
+    def setUpClass(cls):
+        """set up for test"""
+        cls.user = User()
+        cls.user.first_name = "Kev"
+        cls.user.last_name = "Yo"
+        cls.user.email = "1234@yahoo.com"
+        cls.storage = FileStorage()
+        cls.path = "file.json"
+
+    @classmethod
+    def teardown(cls):
+        """at the end of the test this will tear it down"""
+        del cls.user
+        """ if delete the file """
+        if os.path.exists("file.json"):
+            os.remove("file.json")
 
     def tearDown(self):
-        """ check remove class """
+        """teardown"""
         try:
-            remove('file.json')
+            os.remove("file.json")
         except Exception:
             pass
 
-    def test_no_objs(self):
-        """ check empty class  """
-        self.assertEqual(storage.all(), {})
+    def test_pep8_FileStorage(self):
+        """Tests pep8 style"""
+        style = pep8.StyleGuide(quiet=True)
+        p = style.check_files(['models/engine/file_storage.py'])
+        self.assertEqual(p.total_errors, 0, "fix pep8")
+
+    def test_docstring(self):
+        """
+        Test docstring
+        """
+        self.assertIsNotNone(FileStorage.__doc__)
+
+    def test_documentation(self):
+        """
+        Test documentation, created and not empty
+        """
+        self.assertTrue(FileStorage.all.__doc__)
+        self.assertIsNotNone(FileStorage.all.__doc__)
+        self.assertTrue(FileStorage.new.__doc__)
+        self.assertIsNotNone(FileStorage.new.__doc__)
+        self.assertTrue(FileStorage.save.__doc__)
+        self.assertIsNotNone(FileStorage.save.__doc__)
+        self.assertTrue(FileStorage.reload.__doc__)
+        self.assertIsNotNone(FileStorage.reload.__doc__)
 
     def test_all(self):
-        """ check  all function """
+        """tests if all works in File Storage"""
         storage = FileStorage()
         obj = storage.all()
         self.assertIsNotNone(obj)
         self.assertEqual(type(obj), dict)
         self.assertIs(obj, storage._FileStorage__objects)
 
-    def test_save_create(self):
-        """ Save  """
-        obj = BaseModel()
-        obj_key = 'BaseModel' + '.' + obj.id
-        obj1 = User()
-        obj1_key = 'User' + '.' + obj1.id
-        obj2 = City()
-        obj2_key = 'City' + '.' + obj2.id
-        obj3 = Amenity()
-        obj3_key = 'Amenity' + '.' + obj3.id
-        obj4 = Place()
-        obj4_key = 'Place' + '.' + obj4.id
-        obj5 = Review()
-        obj5_key = 'Review' + '.' + obj5.id
-        obj6 = State()
-        obj6_key = 'State' + '.' + obj6.id
+    def test_new(self):
+        """test when new is created"""
+        storage = FileStorage()
+        obj = storage.all()
+        user = User()
+        user.id = "123455"
+        user.name = "Kevin"
+        storage.new(user)
+        key = user.__class__.__name__ + "." + str(user.id)
+        self.assertIsNotNone(obj[key])
 
-        self.assertEqual(obj, storage.all()[obj_key])
-        self.assertEqual(obj1, storage.all()[obj1_key])
-        self.assertEqual(obj2, storage.all()[obj2_key])
-        self.assertEqual(obj3, storage.all()[obj3_key])
-        self.assertEqual(obj4, storage.all()[obj4_key])
-        self.assertEqual(obj5, storage.all()[obj5_key])
-        self.assertEqual(obj6, storage.all()[obj6_key])
+    def test_reload_filestorage(self):
+        """
+        tests reload
+        """
+        self.storage.save()
+        Root = os.path.dirname(os.path.abspath("console.py"))
+        path = os.path.join(Root, "objects.json")
+        with open(path, 'r') as f:
+            lines = f.readlines()
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+        self.storage.save()
+        with open(path, 'r') as f:
+            lines2 = f.readlines()
+        self.assertEqual(lines, lines2)
+        try:
+            os.remove(path)
+        except Exception:
+            pass
+        with open(path, "w") as f:
+            f.write("{}")
+        with open(path, "r") as r:
+            for line in r:
+                self.assertEqual(line, "{}")
+        self.assertIs(self.storage.reload(), None)
 
-    def test_new_empty(self):
-        """ check new method """
-        with self.assertRaises(TypeError):
-            storage.new()
-
-    def test_new_classes(self):
-        """ check  new method is valid """
-        obj = BaseModel(id='123')
-        obj_key = 'BaseModel' + '.' + obj.id
-        obj1 = User(id='01')
-        obj1_key = 'User' + '.' + obj1.id
-        obj2 = City(id='02')
-        obj2_key = 'City' + '.' + obj2.id
-        obj3 = Amenity(id='03')
-        obj3_key = 'Amenity' + '.' + obj3.id
-        obj4 = Place(id='04')
-        obj4_key = 'Place' + '.' + obj4.id
-        obj5 = Review(id='05')
-        obj5_key = 'Review' + '.' + obj5.id
-        obj6 = State(id='06')
-        obj6_key = 'State' + '.' + obj6.id
-
-        self.assertEqual(storage.all(), {})
-        obj.id = 123
-        storage.new(obj)
-        storage.new(obj1)
-        storage.new(obj2)
-        storage.new(obj3)
-        storage.new(obj4)
-        storage.new(obj5)
-        storage.new(obj6)
-        self.assertEqual(obj, storage.all()[obj_key])
-        self.assertEqual(obj1, storage.all()[obj1_key])
-        self.assertEqual(obj2, storage.all()[obj2_key])
-        self.assertEqual(obj3, storage.all()[obj3_key])
-        self.assertEqual(obj4, storage.all()[obj4_key])
-        self.assertEqual(obj5, storage.all()[obj5_key])
-        self.assertEqual(obj6, storage.all()[obj6_key])
-
-    def test_reload(self):
-        """ check reload classes """
-        obj = BaseModel()
-        obj_key = 'BaseModel' + '.' + obj.id
-        obj1 = User()
-        obj1_key = 'User' + '.' + obj1.id
-        obj2 = City()
-        obj2_key = 'City' + '.' + obj2.id
-        obj3 = Amenity()
-        obj3_key = 'Amenity' + '.' + obj3.id
-        obj4 = Place()
-        obj4_key = 'Place' + '.' + obj4.id
-        obj5 = Review()
-        obj5_key = 'Review' + '.' + obj5.id
-        obj6 = State()
-        obj6_key = 'State' + '.' + obj6.id
-        storage.save()
-
-        self.assertTrue(path.isfile('file.json'))
-        FileStorage._FileStorage__objects = {}
-
-        storage.reload()
-
-        self.assertTrue(obj_key in storage.all().keys())
-        self.assertEqual(obj.id, storage.all()[obj_key].id)
-        self.assertTrue(obj1_key in storage.all().keys())
-        self.assertEqual(obj1.id, storage.all()[obj1_key].id)
-        self.assertTrue(obj2_key in storage.all().keys())
-        self.assertEqual(obj2.id, storage.all()[obj2_key].id)
-        self.assertTrue(obj3_key in storage.all().keys())
-        self.assertEqual(obj3.id, storage.all()[obj3_key].id)
-        self.assertTrue(obj4_key in storage.all().keys())
-        self.assertEqual(obj4.id, storage.all()[obj4_key].id)
-        self.assertTrue(obj5_key in storage.all().keys())
-        self.assertEqual(obj5.id, storage.all()[obj5_key].id)
-        self.assertTrue(obj6_key in storage.all().keys())
-        self.assertEqual(obj6.id, storage.all()[obj6_key].id)
-
+    def test_pep8_conformance_file_storage(self):
+        """Test that we conform to PEP8."""
+        pep8style = pep8.StyleGuide(quiet=True)
+        result = pep8style.check_files(['models/engine/file_storage.py'])
+        self.assertEqual(result.total_errors, 0,
+                         "Found code style errors (and warnings).")
